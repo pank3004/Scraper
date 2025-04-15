@@ -1,6 +1,0 @@
-mongodb_url=mongodb+srv://pankajkumawat:<db_password>@cluster0.7lbwgy6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-
-set "MONGODB_URL=mongodb+srv://pankajkumawat:<db_password>@cluster0.7lbwgy6.mongodb.net/?retryWrites=true&^w=majority^&appName=Cluster0"  
-
-// note: Note the ^ before each & to prevent CMD from treating them as command separators.
-echo "%MONGODB_URL%"

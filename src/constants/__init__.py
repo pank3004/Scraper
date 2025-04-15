@@ -5,3 +5,5 @@ from datetime import date
 DATABASE_NAME = "Scrapper"
 # COLLECTION_NAME = "Proj1-Data"
 MONGODB_URL_KEY = "MONGODB_URL"
+
+SESSION_PRODUCT_KEY="product_name"

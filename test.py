@@ -1,3 +1,7 @@
-from src.cloud_io import MongoIO
+from src.cloud_io import MongoDBClient
 
-obj=MongoIO()
+ob=MongoDBClient()
+
+# from src.scrapper.scrape import ScrepeReviews
+
+# obj=ScrepeReviews('T-shirts', 1)

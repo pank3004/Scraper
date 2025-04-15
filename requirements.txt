@@ -1,4 +1,8 @@
 requests
 bs4
-selenium
-database_connect
+selenium==4.31.0
+from_root
+pandas 
+numpy
+
+-e.
