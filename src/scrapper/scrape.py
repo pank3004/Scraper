@@ -11,7 +11,7 @@ from src.logger import logging
 
 
 class ScrepeReviews: 
-    def __init__(self, product_name:str, no_of_products:int): 
+    def __init__(self, product_name:str=None, no_of_products:int=0, product_urls=None): 
         options=Options()
 
         # options.add_argument("--no-sandbox")
@@ -21,6 +21,7 @@ class ScrepeReviews:
         self.driver=webdriver.Chrome(options=options)
         self.product_name=product_name
         self.no_of_products=no_of_products
+        self.product_urls=product_urls or []
     
     def scrape_product_urls(self, product_name): 
         try: 
@@ -78,25 +79,17 @@ class ScrepeReviews:
                     self.product_rating_value = None
             
 
-            # title_h=prodRes_html.find_all('title')
-            # self.product_title=title_h[0].txt
-
-            # overallRating=prodRes_html.find_all('div', {'class':'index-overallRating'})
-            # #self.product_rating_value=overallRating.find('div').text
-            # for i in overallRating:
-            #     self.product_rating_value = i.find("div").text
-
-            # price_container=prodRes_html.find_all('p',{'class':'pdp-discount-container'})
-            # for i in price_container: 
-            #     price=i.find('span')
-            #     price=price.find('strong')
-            #     self.product_price=price.text
-
             product_all_reviews=prodRes_html.find('a',{'class':'detailed-reviews-allReviews'})
 
-            if not product_all_reviews: 
-                return None
-            return product_all_reviews
+
+            return {
+            "review_link": product_all_reviews if product_all_reviews else None,
+            "page_source": prodRes,
+            }
+
+            # if not product_all_reviews: 
+            #     return None
+            # return product_all_reviews
         
         except Exception as e: 
             raise MyException(e,sys)
@@ -123,15 +116,20 @@ class ScrepeReviews:
 
             last_height = new_height
     
-    def extract_products(self, product_all_reviews:list): 
+    def extract_products(self, review__data): 
         try:    
-            t2=product_all_reviews['href']
-            product_all_reviews_link='https://www.myntra.com'+t2
-            self.driver.get(product_all_reviews_link)
-            self.scroll_to_load_all_reviews()
+            if review__data['review_link']:
+                t2=review__data['review_link']['href']
+                product_all_reviews_link='https://www.myntra.com'+t2
+                self.driver.get(product_all_reviews_link)
+                self.scroll_to_load_all_reviews()
 
-            reviews_page=self.driver.page_source
-            reviews_html=bs(reviews_page, 'html.parser')
+                reviews_page=self.driver.page_source
+                reviews_html=bs(reviews_page, 'html.parser')
+            else: 
+                # Use the current product page
+                reviews_html=bs(review__data["page_source"], 'html.parser')
+
 
             reviews=reviews_html.find_all('div', class_='detailed-reviews-userReviewsContainer')
             for i in reviews: 
@@ -142,7 +140,7 @@ class ScrepeReviews:
             reviewsData=[]
             for i in range(len(user_rating)): 
                 try: 
-                    rating=user_rating[i].text
+                    rating=user_rating[i].text.strip()
                 except: 
                     rating='No rating given'
                 try: 
@@ -178,7 +176,7 @@ class ScrepeReviews:
                                                             "Rating",
                                                             "Name",
                                                             "Comment"])
-            return reviews_df
+            return reviews_df if not reviews_df.empty else None
         
         except Exception as e: 
             raise MyException(e,sys)
@@ -190,25 +188,29 @@ class ScrepeReviews:
 
     def get_review_data(self)->pd.DataFrame: 
         try: 
-            product_urls=self.scrape_product_urls(product_name=self.product_name)
+            product_urls=self.product_urls
+
+            print(product_urls) #['https://www.myntra.com/kurtas/aks+kids/aks-kids-boys-checked-mandarin-collar-cotton-straight-kurta/24662004/buy']
+
+            if not product_urls:     
+                product_urls=self.scrape_product_urls(product_name=self.product_name)
 
             product_details=[]
             review_len=0
 
-            while review_len<self.no_of_products: 
-                product_url=product_urls[review_len]
-                review=self.extract_review(product_url)
+            while review_len < max(self.no_of_products, len(product_urls)):
+                product_url = product_urls[review_len]
+                review = self.extract_review(product_url)
 
-                if review: 
-                    product_detail=self.extract_products(review)
+                if review:
+                    product_detail = self.extract_products(review)
                     product_details.append(product_detail)
-
-                    review_len+=1
-
-                else: 
+                    review_len += 1
+                else:
                     product_urls.pop(review_len)
 
-            self.driver.quit()
+
+            #self.driver.quit()
 
             data=pd.concat(product_details, axis=0)
 
