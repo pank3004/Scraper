@@ -61,10 +61,22 @@ class ScrepeReviews:
             for i in product_des: 
                 self.product_title=i.find('h1', {'class':'pdp-title'}).text
                 self.product_name=i.find('h1',{'class':'pdp-name'}).text
-                self.product_rating_value=i.find('div', {'class':'index-overallRating'}).find('div').text
                 self.product_price=i.find('span',{'class':'pdp-price'}).find('strong').text
 
 
+                #self.product_rating_value=i.find('div', {'class':'index-overallRating'}).find('div').text.strip()
+                #(if product don't have rating than it will give error that's why below code is wrote)
+
+                rating_container = i.find('div', {'class': 'index-overallRating'})
+                if rating_container:
+                    rating_value_div = rating_container.find('div')
+                    if rating_value_div:
+                        self.product_rating_value = rating_value_div.text.strip()
+                    else:
+                        self.product_rating_value = None
+                else:
+                    self.product_rating_value = None
+            
 
             # title_h=prodRes_html.find_all('title')
             # self.product_title=title_h[0].txt
